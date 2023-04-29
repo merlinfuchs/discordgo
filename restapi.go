@@ -2405,6 +2405,28 @@ func (s *Session) WebhookMessage(webhookID, token, messageID string, options ...
 	return
 }
 
+// WebhookMessage gets a webhook message.
+// webhookID : The ID of a webhook
+// token     : The auth token for the webhook
+// messageID : The ID of message to get
+// threadID  : Get a message in the specified thread within a webhook's channel.
+func (s *Session) WebhookThreadMessage(webhookID, token, threadID, messageID string, options ...RequestOption) (message *Message, err error) {
+	uri := EndpointWebhookMessage(webhookID, token, messageID)
+
+	v := url.Values{}
+	v.Set("thread_id", threadID)
+	uri += "?" + v.Encode()
+
+	body, err := s.RequestWithBucketID("GET", uri, nil, EndpointWebhookToken("", ""), options...)
+	if err != nil {
+		return
+	}
+
+	err = Unmarshal(body, &message)
+
+	return
+}
+
 // WebhookMessageEdit edits a webhook message and returns a new one.
 // webhookID : The ID of a webhook
 // token     : The auth token for the webhook
