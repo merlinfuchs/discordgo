@@ -7,8 +7,8 @@ import (
 	"net/http"
 	"net/url"
 
-	"github.com/bwmarrin/discordgo"
 	"github.com/joho/godotenv"
+	"github.com/merlinfuchs/discordgo"
 	"golang.org/x/oauth2"
 )
 
