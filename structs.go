@@ -1752,6 +1752,7 @@ type AuditLogOptions struct {
 	ApplicationID                 string               `json:"application_id"`
 	AutoModerationRuleName        string               `json:"auto_moderation_rule_name"`
 	AutoModerationRuleTriggerType string               `json:"auto_moderation_rule_trigger_type"`
+	IntegrationType               string               `json:"integration_type"`
 }
 
 // AuditLogOptionsType of the AuditLogOption
@@ -1760,8 +1761,8 @@ type AuditLogOptionsType string
 
 // Valid Types for AuditLogOptionsType
 const (
-	AuditLogOptionsTypeMember AuditLogOptionsType = "member"
-	AuditLogOptionsTypeRole   AuditLogOptionsType = "role"
+	AuditLogOptionsTypeRole   AuditLogOptionsType = "0"
+	AuditLogOptionsTypeMember AuditLogOptionsType = "1"
 )
 
 // AuditLogAction is the Action of the AuditLog (see AuditLogAction* consts)
@@ -1837,6 +1838,9 @@ const (
 	AuditLogActionAutoModerationBlockMessage              AuditLogAction = 143
 	AuditLogActionAutoModerationFlagToChannel             AuditLogAction = 144
 	AuditLogActionAutoModerationUserCommunicationDisabled AuditLogAction = 145
+
+	AuditLogActionCreatorMonetizationRequestCreated AuditLogAction = 150
+	AuditLogActionCreatorMonetizationTermsAccepted  AuditLogAction = 151
 )
 
 // GuildMemberParams stores data needed to update a member
