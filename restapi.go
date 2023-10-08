@@ -673,14 +673,9 @@ func (s *Session) GuildEdit(guildID string, g *GuildParams, options ...RequestOp
 
 // GuildDelete deletes a Guild.
 // guildID   : The ID of a Guild
-func (s *Session) GuildDelete(guildID string, options ...RequestOption) (st *Guild, err error) {
+func (s *Session) GuildDelete(guildID string, options ...RequestOption) (err error) {
 
-	body, err := s.RequestWithBucketID("DELETE", EndpointGuild(guildID), nil, EndpointGuild(guildID), options...)
-	if err != nil {
-		return
-	}
-
-	err = unmarshal(body, &st)
+	_, err = s.RequestWithBucketID("DELETE", EndpointGuild(guildID), nil, EndpointGuild(guildID), options...)
 	return
 }
 
@@ -2304,7 +2299,8 @@ func (s *Session) WebhookEditWithToken(webhookID, token, name, avatar string, op
 		Avatar string `json:"avatar,omitempty"`
 	}{name, avatar}
 
-	body, err := s.RequestWithBucketID("PATCH", EndpointWebhookToken(webhookID, token), data, EndpointWebhookToken("", ""), options...)
+	var body []byte
+	body, err = s.RequestWithBucketID("PATCH", EndpointWebhookToken(webhookID, token), data, EndpointWebhookToken("", ""), options...)
 	if err != nil {
 		return
 	}

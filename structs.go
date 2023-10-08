@@ -42,6 +42,9 @@ type Session struct {
 	// Should the session reconnect the websocket on errors.
 	ShouldReconnectOnError bool
 
+	// Should voice connections reconnect on a session reconnect.
+	ShouldReconnectVoiceOnSessionError bool
+
 	// Should the session retry requests when rate limited.
 	ShouldRetryOnRateLimit bool
 
@@ -135,24 +138,25 @@ type Session struct {
 
 // Application stores values for a Discord Application
 type Application struct {
-	ID                  string   `json:"id,omitempty"`
-	Name                string   `json:"name"`
-	Icon                string   `json:"icon,omitempty"`
-	Description         string   `json:"description,omitempty"`
-	RPCOrigins          []string `json:"rpc_origins,omitempty"`
-	BotPublic           bool     `json:"bot_public,omitempty"`
-	BotRequireCodeGrant bool     `json:"bot_require_code_grant,omitempty"`
-	TermsOfServiceURL   string   `json:"terms_of_service_url"`
-	PrivacyProxyURL     string   `json:"privacy_policy_url"`
-	Owner               *User    `json:"owner"`
-	Summary             string   `json:"summary"`
-	VerifyKey           string   `json:"verify_key"`
-	Team                *Team    `json:"team"`
-	GuildID             string   `json:"guild_id"`
-	PrimarySKUID        string   `json:"primary_sku_id"`
-	Slug                string   `json:"slug"`
-	CoverImage          string   `json:"cover_image"`
-	Flags               int      `json:"flags,omitempty"`
+	ID                     string   `json:"id,omitempty"`
+	Name                   string   `json:"name"`
+	Icon                   string   `json:"icon,omitempty"`
+	Description            string   `json:"description,omitempty"`
+	RPCOrigins             []string `json:"rpc_origins,omitempty"`
+	BotPublic              bool     `json:"bot_public,omitempty"`
+	BotRequireCodeGrant    bool     `json:"bot_require_code_grant,omitempty"`
+	TermsOfServiceURL      string   `json:"terms_of_service_url"`
+	PrivacyProxyURL        string   `json:"privacy_policy_url"`
+	Owner                  *User    `json:"owner"`
+	Summary                string   `json:"summary"`
+	VerifyKey              string   `json:"verify_key"`
+	Team                   *Team    `json:"team"`
+	GuildID                string   `json:"guild_id"`
+	PrimarySKUID           string   `json:"primary_sku_id"`
+	Slug                   string   `json:"slug"`
+	CoverImage             string   `json:"cover_image"`
+	Flags                  int      `json:"flags,omitempty"`
+	InteractionEndpointURL string   `json:"interaction_endpoint_url,omitempty"`
 }
 
 // ApplicationRoleConnectionMetadataType represents the type of application role connection metadata.
@@ -440,7 +444,7 @@ type ChannelEdit struct {
 	Name                          string                 `json:"name,omitempty"`
 	Topic                         string                 `json:"topic,omitempty"`
 	NSFW                          *bool                  `json:"nsfw,omitempty"`
-	Position                      int                    `json:"position"`
+	Position                      *int                   `json:"position,omitempty"`
 	Bitrate                       int                    `json:"bitrate,omitempty"`
 	UserLimit                     int                    `json:"user_limit,omitempty"`
 	PermissionOverwrites          []*PermissionOverwrite `json:"permission_overwrites,omitempty"`
@@ -1738,14 +1742,18 @@ const (
 // AuditLogOptions optional data for the AuditLog
 // https://discord.com/developers/docs/resources/audit-log#audit-log-entry-object-optional-audit-entry-info
 type AuditLogOptions struct {
-	DeleteMemberDays string               `json:"delete_member_days"`
-	MembersRemoved   string               `json:"members_removed"`
-	ChannelID        string               `json:"channel_id"`
-	MessageID        string               `json:"message_id"`
-	Count            string               `json:"count"`
-	ID               string               `json:"id"`
-	Type             *AuditLogOptionsType `json:"type"`
-	RoleName         string               `json:"role_name"`
+	DeleteMemberDays              string               `json:"delete_member_days"`
+	MembersRemoved                string               `json:"members_removed"`
+	ChannelID                     string               `json:"channel_id"`
+	MessageID                     string               `json:"message_id"`
+	Count                         string               `json:"count"`
+	ID                            string               `json:"id"`
+	Type                          *AuditLogOptionsType `json:"type"`
+	RoleName                      string               `json:"role_name"`
+	ApplicationID                 string               `json:"application_id"`
+	AutoModerationRuleName        string               `json:"auto_moderation_rule_name"`
+	AutoModerationRuleTriggerType string               `json:"auto_moderation_rule_trigger_type"`
+	IntegrationType               string               `json:"integration_type"`
 }
 
 // AuditLogOptionsType of the AuditLogOption
@@ -1754,8 +1762,8 @@ type AuditLogOptionsType string
 
 // Valid Types for AuditLogOptionsType
 const (
-	AuditLogOptionsTypeMember AuditLogOptionsType = "member"
-	AuditLogOptionsTypeRole   AuditLogOptionsType = "role"
+	AuditLogOptionsTypeRole   AuditLogOptionsType = "0"
+	AuditLogOptionsTypeMember AuditLogOptionsType = "1"
 )
 
 // AuditLogAction is the Action of the AuditLog (see AuditLogAction* consts)
@@ -1824,6 +1832,16 @@ const (
 	AuditLogActionThreadDelete AuditLogAction = 112
 
 	AuditLogActionApplicationCommandPermissionUpdate AuditLogAction = 121
+
+	AuditLogActionAutoModerationRuleCreate                AuditLogAction = 140
+	AuditLogActionAutoModerationRuleUpdate                AuditLogAction = 141
+	AuditLogActionAutoModerationRuleDelete                AuditLogAction = 142
+	AuditLogActionAutoModerationBlockMessage              AuditLogAction = 143
+	AuditLogActionAutoModerationFlagToChannel             AuditLogAction = 144
+	AuditLogActionAutoModerationUserCommunicationDisabled AuditLogAction = 145
+
+	AuditLogActionCreatorMonetizationRequestCreated AuditLogAction = 150
+	AuditLogActionCreatorMonetizationTermsAccepted  AuditLogAction = 151
 )
 
 // GuildMemberParams stores data needed to update a member
