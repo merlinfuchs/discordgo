@@ -1797,16 +1797,18 @@ func (s *Session) ChannelMessageEditComplex(m *MessageEdit, options ...RequestOp
 	// TODO: Remove this when compatibility is not required.
 	if m.Embed != nil {
 		if m.Embeds == nil {
-			m.Embeds = []*MessageEmbed{m.Embed}
+			m.Embeds = &[]*MessageEmbed{m.Embed}
 		} else {
 			err = fmt.Errorf("cannot specify both Embed and Embeds")
 			return
 		}
 	}
 
-	for _, embed := range m.Embeds {
-		if embed.Type == "" {
-			embed.Type = "rich"
+	if m.Embeds != nil {
+		for _, embed := range *m.Embeds {
+			if embed.Type == "" {
+				embed.Type = "rich"
+			}
 		}
 	}
 
@@ -2268,7 +2270,7 @@ func (s *Session) WebhookWithToken(webhookID, token string, options ...RequestOp
 // webhookID: The ID of a webhook.
 // name     : The name of the webhook.
 // avatar   : The avatar of the webhook.
-func (s *Session) WebhookEdit(webhookID, name, avatar, channelID string, options ...RequestOption) (st *Role, err error) {
+func (s *Session) WebhookEdit(webhookID, name, avatar, channelID string, options ...RequestOption) (st *Webhook, err error) {
 
 	data := struct {
 		Name      string `json:"name,omitempty"`
@@ -2291,7 +2293,7 @@ func (s *Session) WebhookEdit(webhookID, name, avatar, channelID string, options
 // token    : The auth token for the webhook.
 // name     : The name of the webhook.
 // avatar   : The avatar of the webhook.
-func (s *Session) WebhookEditWithToken(webhookID, token, name, avatar string, options ...RequestOption) (st *Role, err error) {
+func (s *Session) WebhookEditWithToken(webhookID, token, name, avatar string, options ...RequestOption) (st *Webhook, err error) {
 
 	data := struct {
 		Name   string `json:"name,omitempty"`
