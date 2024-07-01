@@ -358,7 +358,7 @@ func (s *Session) UserAvatarDecode(u *User, options ...RequestOption) (img image
 }
 
 // UserUpdate updates current user settings.
-func (s *Session) UserUpdate(username, avatar string, options ...RequestOption) (st *User, err error) {
+func (s *Session) UserUpdate(username, avatar, banner string, options ...RequestOption) (st *User, err error) {
 
 	// NOTE: Avatar must be either the hash/id of existing Avatar or
 	// data:image/png;base64,BASE64_STRING_OF_NEW_AVATAR_PNG
@@ -368,7 +368,8 @@ func (s *Session) UserUpdate(username, avatar string, options ...RequestOption) 
 	data := struct {
 		Username string `json:"username,omitempty"`
 		Avatar   string `json:"avatar,omitempty"`
-	}{username, avatar}
+		Banner   string `json:"banner,omitempty"`
+	}{username, avatar, banner}
 
 	body, err := s.RequestWithBucketID("PATCH", EndpointUser("@me"), data, EndpointUsers, options...)
 	if err != nil {
@@ -424,10 +425,11 @@ func (s *Session) UserGuildMember(guildID string, options ...RequestOption) (st 
 }
 
 // UserGuilds returns an array of UserGuild structures for all guilds.
-// limit     : The number guilds that can be returned. (max 100)
-// beforeID  : If provided all guilds returned will be before given ID.
-// afterID   : If provided all guilds returned will be after given ID.
-func (s *Session) UserGuilds(limit int, beforeID, afterID string, options ...RequestOption) (st []*UserGuild, err error) {
+// limit       : The number guilds that can be returned. (max 200)
+// beforeID    : If provided all guilds returned will be before given ID.
+// afterID     : If provided all guilds returned will be after given ID.
+// withCounts  : Whether to include approximate member and presence counts or not.
+func (s *Session) UserGuilds(limit int, beforeID, afterID string, withCounts bool, options ...RequestOption) (st []*UserGuild, err error) {
 
 	v := url.Values{}
 
@@ -439,6 +441,9 @@ func (s *Session) UserGuilds(limit int, beforeID, afterID string, options ...Req
 	}
 	if beforeID != "" {
 		v.Set("before", beforeID)
+	}
+	if withCounts {
+		v.Set("with_counts", "true")
 	}
 
 	uri := EndpointUserGuilds("@me")
@@ -3521,5 +3526,51 @@ func (s *Session) UserApplicationRoleConnectionUpdate(appID string, rconn *Appli
 	}
 
 	err = unmarshal(body, &st)
+	return
+}
+
+// ----------------------------------------------------------------------
+// Functions specific to polls
+// ----------------------------------------------------------------------
+
+// PollAnswerVoters returns users who voted for a particular answer in a poll on the specified message.
+// channelID : ID of the channel.
+// messageID : ID of the message.
+// answerID  : ID of the answer.
+func (s *Session) PollAnswerVoters(channelID, messageID string, answerID int) (voters []*User, err error) {
+	endpoint := EndpointPollAnswerVoters(channelID, messageID, answerID)
+
+	var body []byte
+	body, err = s.RequestWithBucketID("GET", endpoint, nil, endpoint)
+	if err != nil {
+		return
+	}
+
+	var r struct {
+		Users []*User `json:"users"`
+	}
+
+	err = unmarshal(body, &r)
+	if err != nil {
+		return
+	}
+
+	voters = r.Users
+	return
+}
+
+// PollExpire expires poll on the specified message.
+// channelID : ID of the channel.
+// messageID : ID of the message.
+func (s *Session) PollExpire(channelID, messageID string) (msg *Message, err error) {
+	endpoint := EndpointPollExpire(channelID, messageID)
+
+	var body []byte
+	body, err = s.RequestWithBucketID("POST", endpoint, nil, endpoint)
+	if err != nil {
+		return
+	}
+
+	err = unmarshal(body, &msg)
 	return
 }
