@@ -53,6 +53,7 @@ type ChannelCreate struct {
 // ChannelUpdate is the data for a ChannelUpdate event.
 type ChannelUpdate struct {
 	*Channel
+	BeforeUpdate *Channel `json:"-"`
 }
 
 // ChannelDelete is the data for a ChannelDelete event.
@@ -238,6 +239,25 @@ type GuildScheduledEventUserRemove struct {
 	GuildScheduledEventID string `json:"guild_scheduled_event_id"`
 	UserID                string `json:"user_id"`
 	GuildID               string `json:"guild_id"`
+}
+
+// IntegrationCreate is the data for a IntegrationCreate event.
+type IntegrationCreate struct {
+	*Integration
+	GuildID string `json:"guild_id"`
+}
+
+// IntegrationUpdate is the data for a IntegrationUpdate event.
+type IntegrationUpdate struct {
+	*Integration
+	GuildID string `json:"guild_id"`
+}
+
+// IntegrationDelete is the data for a IntegrationDelete event.
+type IntegrationDelete struct {
+	ID            string `json:"id"`
+	GuildID       string `json:"guild_id"`
+	ApplicationID string `json:"application_id,omitempty"`
 }
 
 // MessageCreate is the data for a MessageCreate event.
