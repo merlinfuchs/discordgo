@@ -18,6 +18,13 @@ const (
 	RoleSelectMenuComponent        ComponentType = 6
 	MentionableSelectMenuComponent ComponentType = 7
 	ChannelSelectMenuComponent     ComponentType = 8
+	SectionComponent               ComponentType = 9
+	TextDisplayComponent           ComponentType = 10
+	ThumbnailComponent             ComponentType = 11
+	MediaGalleryComponent          ComponentType = 12
+	FileComponent                  ComponentType = 13
+	SeparatorComponent             ComponentType = 14
+	ContainerComponent             ComponentType = 17
 )
 
 // MessageComponent is a base interface for all message components.
@@ -50,6 +57,20 @@ func (umc *unmarshalableMessageComponent) UnmarshalJSON(src []byte) error {
 		umc.MessageComponent = &SelectMenu{}
 	case TextInputComponent:
 		umc.MessageComponent = &TextInput{}
+	case SectionComponent:
+		umc.MessageComponent = &Section{}
+	case TextDisplayComponent:
+		umc.MessageComponent = &TextDisplay{}
+	case ThumbnailComponent:
+		umc.MessageComponent = &Thumbnail{}
+	case MediaGalleryComponent:
+		umc.MessageComponent = &MediaGallery{}
+	case FileComponent:
+		umc.MessageComponent = &ComponentFile{}
+	case SeparatorComponent:
+		umc.MessageComponent = &Separator{}
+	case ContainerComponent:
+		umc.MessageComponent = &Container{}
 	default:
 		return fmt.Errorf("unknown component type: %d", v.Type)
 	}
@@ -68,6 +89,7 @@ func MessageComponentFromJSON(b []byte) (MessageComponent, error) {
 
 // ActionsRow is a container for components within one row.
 type ActionsRow struct {
+	ID         int                `json:"id,omitempty"`
 	Components []MessageComponent `json:"components"`
 }
 
@@ -134,6 +156,7 @@ type ComponentEmoji struct {
 
 // Button represents button component.
 type Button struct {
+	ID       int             `json:"id,omitempty"`
 	Label    string          `json:"label"`
 	Style    ButtonStyle     `json:"style"`
 	Disabled bool            `json:"disabled"`
@@ -170,6 +193,7 @@ func (Button) Type() ComponentType {
 
 // SelectMenuOption represents an option for a select menu.
 type SelectMenuOption struct {
+	ID          int             `json:"id,omitempty"`
 	Label       string          `json:"label,omitempty"`
 	Value       string          `json:"value"`
 	Description string          `json:"description"`
@@ -210,6 +234,8 @@ const (
 
 // SelectMenu represents select menu component.
 type SelectMenu struct {
+	// ID is the ID of the select menu.
+	ID int `json:"id,omitempty"`
 	// Type of the select menu.
 	MenuType SelectMenuType `json:"type,omitempty"`
 	// CustomID is a developer-defined identifier for the select menu.
@@ -255,6 +281,7 @@ func (s SelectMenu) MarshalJSON() ([]byte, error) {
 
 // TextInput represents text input component.
 type TextInput struct {
+	ID          int            `json:"id,omitempty"`
 	CustomID    string         `json:"custom_id"`
 	Label       string         `json:"label"`
 	Style       TextInputStyle `json:"style"`
@@ -291,3 +318,214 @@ const (
 	TextInputShort     TextInputStyle = 1
 	TextInputParagraph TextInputStyle = 2
 )
+
+type Section struct {
+	ID         int                `json:"id,omitempty"`
+	Label      string             `json:"label"`
+	Text       string             `json:"text"`
+	Components []MessageComponent `json:"components"`
+	Accessory  MessageComponent   `json:"accessory"`
+}
+
+func (s Section) Type() ComponentType {
+	return SectionComponent
+}
+
+func (s Section) MarshalJSON() ([]byte, error) {
+	type section Section
+
+	return Marshal(struct {
+		section
+		Type ComponentType `json:"type"`
+	}{
+		section: section(s),
+		Type:    s.Type(),
+	})
+}
+
+func (s *Section) UnmarshalJSON(data []byte) error {
+	type section Section
+	var v struct {
+		section
+		RawComponents []unmarshalableMessageComponent `json:"components"`
+		RawAccessory  unmarshalableMessageComponent   `json:"accessory"`
+	}
+	err := json.Unmarshal(data, &v)
+	if err != nil {
+		return err
+	}
+	*s = Section(v.section)
+	s.Components = make([]MessageComponent, len(v.RawComponents))
+	for i, v := range v.RawComponents {
+		s.Components[i] = v.MessageComponent
+	}
+	s.Accessory = v.RawAccessory.MessageComponent
+	return nil
+}
+
+type TextDisplay struct {
+	ID      int    `json:"id,omitempty"`
+	Content string `json:"content"`
+}
+
+func (t TextDisplay) Type() ComponentType {
+	return TextDisplayComponent
+}
+
+func (t TextDisplay) MarshalJSON() ([]byte, error) {
+	type textDisplay TextDisplay
+
+	return Marshal(struct {
+		textDisplay
+		Type ComponentType `json:"type"`
+	}{
+		textDisplay: textDisplay(t),
+		Type:        t.Type(),
+	})
+}
+
+type Thumbnail struct {
+	ID          int               `json:"id,omitempty"`
+	Content     string            `json:"content"`
+	Media       UnfurledMediaItem `json:"media"`
+	Description string            `json:"description,omitempty"`
+	Spoiler     bool              `json:"spoiler,omitempty"`
+}
+
+func (t Thumbnail) Type() ComponentType {
+	return ThumbnailComponent
+}
+
+func (t Thumbnail) MarshalJSON() ([]byte, error) {
+	type thumbnail Thumbnail
+
+	return Marshal(struct {
+		thumbnail
+		Type ComponentType `json:"type"`
+	}{
+		thumbnail: thumbnail(t),
+		Type:      t.Type(),
+	})
+}
+
+type MediaGallery struct {
+	ID    int                `json:"id,omitempty"`
+	Items []MediaGalleryItem `json:"items"`
+}
+
+func (m MediaGallery) Type() ComponentType {
+	return MediaGalleryComponent
+}
+
+func (m MediaGallery) MarshalJSON() ([]byte, error) {
+	type mediaGallery MediaGallery
+
+	return Marshal(struct {
+		mediaGallery
+		Type ComponentType `json:"type"`
+	}{
+		mediaGallery: mediaGallery(m),
+		Type:         m.Type(),
+	})
+}
+
+type MediaGalleryItem struct {
+	Media       UnfurledMediaItem `json:"media"`
+	Description string            `json:"description,omitempty"`
+	Spoiler     bool              `json:"spoiler,omitempty"`
+}
+
+type ComponentFile struct {
+	ID      int               `json:"id,omitempty"`
+	Content string            `json:"content"`
+	File    UnfurledMediaItem `json:"file"`
+	Spoiler bool              `json:"spoiler,omitempty"`
+}
+
+func (f ComponentFile) Type() ComponentType {
+	return FileComponent
+}
+
+func (f ComponentFile) MarshalJSON() ([]byte, error) {
+	type file ComponentFile
+
+	return Marshal(struct {
+		file
+		Type ComponentType `json:"type"`
+	}{
+		file: file(f),
+		Type: f.Type(),
+	})
+}
+
+type Separator struct {
+	ID      int  `json:"id,omitempty"`
+	Divider bool `json:"divider,omitempty"`
+	Spacing int  `json:"spacing,omitempty"`
+}
+
+func (s Separator) Type() ComponentType {
+	return SeparatorComponent
+}
+
+func (s Separator) MarshalJSON() ([]byte, error) {
+	type separator Separator
+
+	return Marshal(struct {
+		separator
+		Type ComponentType `json:"type"`
+	}{
+		separator: separator(s),
+		Type:      s.Type(),
+	})
+}
+
+type Container struct {
+	ID          int                `json:"id,omitempty"`
+	Content     string             `json:"content"`
+	Components  []MessageComponent `json:"components"`
+	AccentColor int                `json:"accent_color,omitempty"`
+	Spoiler     bool               `json:"spoiler,omitempty"`
+}
+
+func (c Container) Type() ComponentType {
+	return ContainerComponent
+}
+
+func (c Container) MarshalJSON() ([]byte, error) {
+	type container Container
+
+	return Marshal(struct {
+		container
+		Type ComponentType `json:"type"`
+	}{
+		container: container(c),
+		Type:      c.Type(),
+	})
+}
+
+func (c *Container) UnmarshalJSON(data []byte) error {
+	type container Container
+	var v struct {
+		container
+		RawComponents []unmarshalableMessageComponent `json:"components"`
+	}
+	err := json.Unmarshal(data, &v)
+	if err != nil {
+		return err
+	}
+	*c = Container(v.container)
+	c.Components = make([]MessageComponent, len(v.RawComponents))
+	for i, v := range v.RawComponents {
+		c.Components[i] = v.MessageComponent
+	}
+	return nil
+}
+
+type UnfurledMediaItem struct {
+	URL         string `json:"url"`
+	ProxyURL    string `json:"proxy_url,omitempty"`
+	Width       int    `json:"width,omitempty"`
+	Height      int    `json:"height,omitempty"`
+	ContentType string `json:"content_type,omitempty"`
+}
