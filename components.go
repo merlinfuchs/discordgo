@@ -321,8 +321,6 @@ const (
 
 type Section struct {
 	ID         int                `json:"id,omitempty"`
-	Label      string             `json:"label"`
-	Text       string             `json:"text"`
 	Components []MessageComponent `json:"components"`
 	Accessory  MessageComponent   `json:"accessory"`
 }
