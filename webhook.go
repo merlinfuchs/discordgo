@@ -50,6 +50,7 @@ type WebhookEdit struct {
 	Components      *[]MessageComponent     `json:"components,omitempty"`
 	Embeds          *[]*MessageEmbed        `json:"embeds,omitempty"`
 	Files           []*File                 `json:"-"`
-	Attachments     *[]*MessageAttachment   `json:"attachments,omitempty"`
 	AllowedMentions *MessageAllowedMentions `json:"allowed_mentions,omitempty"`
+	// Overwrite existing attachments
+	Attachments *[]*MessageAttachment `json:"attachments,omitempty"`
 }

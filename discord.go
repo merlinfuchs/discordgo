@@ -1,5 +1,5 @@
 // Discordgo - Discord bindings for Go
-// Available at https://github.com/bwmarrin/discordgo
+// Available at https://github.com/merlinfuchs/discordgo
 
 // Copyright 2015-2016 Bruce Marriner <bruce@sqls.net>.  All rights reserved.
 // Use of this source code is governed by a BSD-style
@@ -33,21 +33,20 @@ func New(token string) (s *Session, err error) {
 
 	// Create an empty Session interface.
 	s = &Session{
-		State:                              NewState(),
-		Ratelimiter:                        NewRatelimiter(),
-		StateEnabled:                       true,
-		Compress:                           true,
-		ShouldReconnectOnError:             true,
-		ShouldReconnectVoiceOnSessionError: true,
-		ShouldRetryOnRateLimit:             true,
-		ShardID:                            0,
-		ShardCount:                         1,
-		MaxRestRetries:                     3,
-		Client:                             &http.Client{Timeout: (20 * time.Second)},
-		Dialer:                             websocket.DefaultDialer,
-		UserAgent:                          "DiscordBot (https://github.com/bwmarrin/discordgo, v" + VERSION + ")",
-		sequence:                           new(int64),
-		LastHeartbeatAck:                   time.Now().UTC(),
+		State:                  NewState(),
+		Ratelimiter:            NewRatelimiter(),
+		StateEnabled:           true,
+		Compress:               true,
+		ShouldReconnectOnError: true,
+		ShouldRetryOnRateLimit: true,
+		ShardID:                0,
+		ShardCount:             1,
+		MaxRestRetries:         3,
+		Client:                 &http.Client{Timeout: (20 * time.Second)},
+		Dialer:                 websocket.DefaultDialer,
+		UserAgent:              "DiscordBot (https://github.com/merlinfuchs/discordgo, v" + VERSION + ")",
+		sequence:               new(int64),
+		LastHeartbeatAck:       time.Now().UTC(),
 	}
 
 	// Initialize the Identify Package with defaults
