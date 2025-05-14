@@ -9,7 +9,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/merlinfuchs/discordgo"
+	"github.com/bwmarrin/discordgo"
 )
 
 // Flags

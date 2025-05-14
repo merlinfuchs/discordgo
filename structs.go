@@ -1,5 +1,5 @@
 // Discordgo - Discord bindings for Go
-// Available at https://github.com/merlinfuchs/discordgo
+// Available at https://github.com/bwmarrin/discordgo
 
 // Copyright 2015-2016 Bruce Marriner <bruce@sqls.net>.  All rights reserved.
 // Use of this source code is governed by a BSD-style
@@ -179,7 +179,7 @@ type Application struct {
 	CoverImage             string                                                           `json:"cover_image"`
 	Flags                  int                                                              `json:"flags,omitempty"`
 	IntegrationTypesConfig map[ApplicationIntegrationType]*ApplicationIntegrationTypeConfig `json:"integration_types,omitempty"`
-	InteractionEndpointURL string   `json:"interaction_endpoint_url,omitempty"`
+	InteractionEndpointURL string                                                           `json:"interaction_endpoint_url,omitempty"`
 }
 
 // ApplicationRoleConnectionMetadataType represents the type of application role connection metadata.

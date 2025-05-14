@@ -1,6 +1,6 @@
 # DiscordGo
 
-[![Go Reference](https://pkg.go.dev/badge/github.com/merlinfuchs/discordgo.svg)](https://pkg.go.dev/github.com/merlinfuchs/discordgo) [![Go Report Card](https://goreportcard.com/badge/github.com/merlinfuchs/discordgo)](https://goreportcard.com/report/github.com/merlinfuchs/discordgo) [![CI](https://github.com/merlinfuchs/discordgo/actions/workflows/ci.yml/badge.svg)](https://github.com/merlinfuchs/discordgo/actions/workflows/ci.yml) [![Discord Gophers](https://img.shields.io/badge/Discord%20Gophers-%23discordgo-blue.svg)](https://discord.gg/golang) [![Discord API](https://img.shields.io/badge/Discord%20API-%23go_discordgo-blue.svg)](https://discord.com/invite/discord-api)
+[![Go Reference](https://pkg.go.dev/badge/github.com/bwmarrin/discordgo.svg)](https://pkg.go.dev/github.com/bwmarrin/discordgo) [![Go Report Card](https://goreportcard.com/badge/github.com/bwmarrin/discordgo)](https://goreportcard.com/report/github.com/bwmarrin/discordgo) [![CI](https://github.com/bwmarrin/discordgo/actions/workflows/ci.yml/badge.svg)](https://github.com/bwmarrin/discordgo/actions/workflows/ci.yml) [![Discord Gophers](https://img.shields.io/badge/Discord%20Gophers-%23discordgo-blue.svg)](https://discord.gg/golang) [![Discord API](https://img.shields.io/badge/Discord%20API-%23go_discordgo-blue.svg)](https://discord.com/invite/discord-api)
 
 <img align="right" alt="DiscordGo logo" src="docs/img/discordgo.svg" width="400">
 
@@ -34,7 +34,7 @@ This assumes you already have a working Go environment, if not please see
 `go get` _will always pull the latest tagged release from the master branch._
 
 ```sh
-go get github.com/merlinfuchs/discordgo
+go get github.com/bwmarrin/discordgo
 ```
 
 ### Usage
@@ -42,7 +42,7 @@ go get github.com/merlinfuchs/discordgo
 Import the package into your project.
 
 ```go
-import "github.com/merlinfuchs/discordgo"
+import "github.com/bwmarrin/discordgo"
 ```
 
 Construct a new Discord client which can be used to access the variety of
@@ -62,7 +62,7 @@ Because of that there may be major changes to library in the future.
 The DiscordGo code is fairly well documented at this point and is currently
 the only documentation available. Go reference (below) presents that information in a nice format.
 
-- [![Go Reference](https://pkg.go.dev/badge/github.com/merlinfuchs/discordgo.svg)](https://pkg.go.dev/github.com/merlinfuchs/discordgo)
+- [![Go Reference](https://pkg.go.dev/badge/github.com/bwmarrin/discordgo.svg)](https://pkg.go.dev/github.com/bwmarrin/discordgo)
 - Hand crafted documentation coming eventually.
 
 ## Examples
@@ -70,13 +70,13 @@ the only documentation available. Go reference (below) presents that information
 Below is a list of examples and other projects using DiscordGo. Please submit
 an issue if you would like your project added or removed from this list.
 
-- [DiscordGo Examples](https://github.com/merlinfuchs/discordgo/tree/master/examples) - A collection of example programs written with DiscordGo
-- [Awesome DiscordGo](https://github.com/merlinfuchs/discordgo/wiki/Awesome-DiscordGo) - A curated list of high quality projects using DiscordGo
+- [DiscordGo Examples](https://github.com/bwmarrin/discordgo/tree/master/examples) - A collection of example programs written with DiscordGo
+- [Awesome DiscordGo](https://github.com/bwmarrin/discordgo/wiki/Awesome-DiscordGo) - A curated list of high quality projects using DiscordGo
 
 ## Troubleshooting
 
 For help with common problems please reference the
-[Troubleshooting](https://github.com/merlinfuchs/discordgo/wiki/Troubleshooting)
+[Troubleshooting](https://github.com/bwmarrin/discordgo/wiki/Troubleshooting)
 section of the project wiki.
 
 ## Contributing

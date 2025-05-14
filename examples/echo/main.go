@@ -7,7 +7,7 @@ import (
 	"os/signal"
 	"strings"
 
-	"github.com/merlinfuchs/discordgo"
+	"github.com/bwmarrin/discordgo"
 )
 
 type optionMap = map[string]*discordgo.ApplicationCommandInteractionDataOption
