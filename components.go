@@ -458,7 +458,7 @@ func (f ComponentFile) MarshalJSON() ([]byte, error) {
 
 type Separator struct {
 	ID      int  `json:"id,omitempty"`
-	Divider bool `json:"divider,omitempty"`
+	Divider bool `json:"divider"`
 	Spacing int  `json:"spacing,omitempty"`
 }
 
