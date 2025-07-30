@@ -52,4 +52,5 @@ type WebhookEdit struct {
 	Files           []*File                 `json:"-"`
 	AllowedMentions *MessageAllowedMentions `json:"allowed_mentions,omitempty"`
 	Flags           MessageFlags            `json:"flags,omitempty"`
+	Attachments     *[]*MessageAttachment   `json:"attachments,omitempty"`
 }
