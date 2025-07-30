@@ -2551,7 +2551,7 @@ func (s *Session) WebhookThreadMessageEdit(webhookID, token, threadID, messageID
 			return nil, err
 		}
 
-		response, err = s.request("PATCH", uri, contentType, body, uri, 0, options...)
+		response, err = s.RequestRaw("PATCH", uri, contentType, body, uri, 0, options...)
 		if err != nil {
 			return nil, err
 		}

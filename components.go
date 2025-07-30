@@ -163,7 +163,6 @@ type ComponentEmoji struct {
 
 // Button represents button component.
 type Button struct {
-	ID       int             `json:"id,omitempty"`
 	Label    string          `json:"label"`
 	Style    ButtonStyle     `json:"style"`
 	Disabled bool            `json:"disabled"`
@@ -243,8 +242,6 @@ const (
 
 // SelectMenu represents select menu component.
 type SelectMenu struct {
-	// ID is the ID of the select menu.
-	ID int `json:"id,omitempty"`
 	// Type of the select menu.
 	MenuType SelectMenuType `json:"type,omitempty"`
 	// CustomID is a developer-defined identifier for the select menu.
@@ -293,7 +290,6 @@ func (s SelectMenu) MarshalJSON() ([]byte, error) {
 
 // TextInput represents text input component.
 type TextInput struct {
-	ID          int            `json:"id,omitempty"`
 	CustomID    string         `json:"custom_id"`
 	Label       string         `json:"label"`
 	Style       TextInputStyle `json:"style"`
