@@ -36,13 +36,14 @@ type Event struct {
 
 // A Ready stores all data for the websocket READY event.
 type Ready struct {
-	Version         int          `json:"v"`
-	SessionID       string       `json:"session_id"`
-	User            *User        `json:"user"`
-	Shard           *[2]int      `json:"shard"`
-	Application     *Application `json:"application"`
-	Guilds          []*Guild     `json:"guilds"`
-	PrivateChannels []*Channel   `json:"private_channels"`
+	Version          int          `json:"v"`
+	SessionID        string       `json:"session_id"`
+	User             *User        `json:"user"`
+	Shard            *[2]int      `json:"shard"`
+	ResumeGatewayURL string       `json:"resume_gateway_url"`
+	Application      *Application `json:"application"`
+	Guilds           []*Guild     `json:"guilds"`
+	PrivateChannels  []*Channel   `json:"private_channels"`
 }
 
 // ChannelCreate is the data for a ChannelCreate event.
@@ -179,6 +180,12 @@ type GuildRoleDelete struct {
 type GuildEmojisUpdate struct {
 	GuildID string   `json:"guild_id"`
 	Emojis  []*Emoji `json:"emojis"`
+}
+
+// A GuildStickersUpdate is the data for a GuildStickersUpdate event.
+type GuildStickersUpdate struct {
+	GuildID  string     `json:"guild_id"`
+	Stickers []*Sticker `json:"stickers"`
 }
 
 // A GuildMembersChunk is the data for a GuildMembersChunk event.
