@@ -443,7 +443,8 @@ type Channel struct {
 	// AvailableTags []ForumTag `json:"available_tags"`
 
 	// The IDs of the set of tags that have been applied to a thread in a forum channel.
-	AppliedTags []string `json:"applied_tags"`
+	// NOTE: Removed because Discord some times returned the ForumTag id as int instead of string
+	// AppliedTags []string `json:"applied_tags"`
 
 	// Emoji to use as the default reaction to a forum post.
 	DefaultReactionEmoji ForumDefaultReaction `json:"default_reaction_emoji"`
