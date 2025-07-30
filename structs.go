@@ -439,7 +439,8 @@ type Channel struct {
 	Flags ChannelFlags `json:"flags"`
 
 	// The set of tags that can be used in a forum channel.
-	AvailableTags []ForumTag `json:"available_tags"`
+	// NOTE: Removed because Discord some times returned the ForumTag id as int instead of string
+	// AvailableTags []ForumTag `json:"available_tags"`
 
 	// The IDs of the set of tags that have been applied to a thread in a forum channel.
 	AppliedTags []string `json:"applied_tags"`
