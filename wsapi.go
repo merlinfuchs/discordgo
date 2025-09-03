@@ -959,6 +959,27 @@ func (s *Session) Close() error {
 	return s.CloseWithCode(websocket.CloseNormalClosure)
 }
 
+// Kill closes the websocket connection abruptly and makes the session unusable.
+func (s *Session) Kill() error {
+	s.log(LogInformational, "called")
+
+	if s.listening != nil {
+		s.log(LogInformational, "closing listening channel")
+		close(s.listening)
+		s.listening = nil
+	}
+
+	if s.wsConn != nil {
+		s.log(LogInformational, "closing gateway websocket")
+		err := s.wsConn.Close()
+		if err != nil {
+			s.log(LogInformational, "error closing websocket, %s", err)
+		}
+	}
+
+	return nil
+}
+
 // CloseWithCode closes a websocket using the provided closeCode and stops all
 // listening/heartbeat goroutines.
 // TODO: Add support for Voice WS/UDP connections
