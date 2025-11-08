@@ -115,7 +115,7 @@ func (s *Session) Open() error {
 	if err != nil {
 		return err
 	}
-	e, err := s.onEvent(mt, m)
+	e, err := s.OnMessage(mt, m)
 	if err != nil {
 		return err
 	}
@@ -181,7 +181,7 @@ func (s *Session) Open() error {
 	if err != nil {
 		return err
 	}
-	e, err = s.onEvent(mt, m)
+	e, err = s.OnMessage(mt, m)
 	if err != nil {
 		return err
 	}
@@ -192,7 +192,7 @@ func (s *Session) Open() error {
 	s.log(LogInformational, "First Packet:\n%#v\n", e)
 
 	s.log(LogInformational, "We are now connected to Discord, emitting connect event")
-	s.handleEvent(connectEventType, &Connect{})
+	s.HandleEvent(connectEventType, &Connect{})
 
 	// A VoiceConnections map is a hard requirement for Voice.
 	// XXX: can this be moved to when opening a voice connection?
@@ -256,7 +256,7 @@ func (s *Session) listen(wsConn *websocket.Conn, listening <-chan interface{}) {
 			return
 
 		default:
-			s.onEvent(messageType, message)
+			s.OnMessage(messageType, message)
 
 		}
 	}
@@ -555,7 +555,7 @@ func (s *Session) requestGuildMembers(data requestGuildMembersData) (err error) 
 	return
 }
 
-// onEvent is the "event handler" for all messages received on the
+// OnMessage is the "event handler" for all messages received on the
 // Discord Gateway API websocket connection.
 //
 // If you use the AddHandler() function to register a handler for a
@@ -563,7 +563,7 @@ func (s *Session) requestGuildMembers(data requestGuildMembersData) (err error) 
 //
 // If you use the AddHandler() function to register a handler for the
 // "OnEvent" event then all events will be passed to that handler.
-func (s *Session) onEvent(messageType int, message []byte) (*Event, error) {
+func (s *Session) OnMessage(messageType int, message []byte) (*Event, error) {
 
 	var err error
 	var reader io.Reader
@@ -690,13 +690,13 @@ func (s *Session) onEvent(messageType int, message []byte) (*Event, error) {
 		// it's better to pass along what we received than nothing at all.
 		// TODO: Think about that decision :)
 		// Either way, READY events must fire, even with errors.
-		s.handleEvent(e.Type, e.Struct)
+		s.HandleEvent(e.Type, e.Struct)
 	} else {
 		s.log(LogWarning, "unknown event: Op: %d, Seq: %d, Type: %s, Data: %s", e.Operation, e.Sequence, e.Type, string(e.RawData))
 	}
 
 	// For legacy reasons, we send the raw event also, this could be useful for handling unknown events.
-	s.handleEvent(eventEventType, e)
+	s.HandleEvent(eventEventType, e)
 
 	return e, nil
 }
@@ -1026,7 +1026,7 @@ func (s *Session) CloseWithCode(closeCode int) (err error) {
 	s.Unlock()
 
 	s.log(LogInformational, "emit disconnect event")
-	s.handleEvent(disconnectEventType, &Disconnect{})
+	s.HandleEvent(disconnectEventType, &Disconnect{})
 
 	return
 }
