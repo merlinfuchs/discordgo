@@ -596,6 +596,11 @@ func (s *Session) OnMessage(messageType int, message []byte) (*Event, error) {
 		return e, err
 	}
 
+	err = s.OnRawEvent(e)
+	return e, err
+}
+
+func (s *Session) OnRawEvent(e *Event) error {
 	s.log(LogDebug, "Op: %d, Seq: %d, Type: %s, Data: %s\n\n", e.Operation, e.Sequence, e.Type, string(e.RawData))
 
 	// Ping request.
@@ -605,17 +610,17 @@ func (s *Session) OnMessage(messageType int, message []byte) (*Event, error) {
 		s.wsMutex.Lock()
 		// TODO: temporary change because of frequent panics
 		if s.wsConn != nil {
-			err = s.wsConn.WriteJSON(heartbeatOp{1, atomic.LoadInt64(s.sequence)})
+			err := s.wsConn.WriteJSON(heartbeatOp{1, atomic.LoadInt64(s.sequence)})
 			if err != nil {
 				s.log(LogError, "error sending heartbeat in response to Op1")
-				return e, err
+				return err
 			}
 		} else {
 			s.log(LogWarning, "no websocket connection to send heartbeat in response to Op1")
 		}
 		s.wsMutex.Unlock()
 
-		return e, nil
+		return nil
 	}
 
 	// Reconnect
@@ -624,7 +629,7 @@ func (s *Session) OnMessage(messageType int, message []byte) (*Event, error) {
 		s.log(LogInformational, "Closing and reconnecting in response to Op7")
 		s.CloseWithCode(websocket.CloseServiceRestart)
 		s.reconnect()
-		return e, nil
+		return nil
 	}
 
 	// Invalid Session
@@ -636,7 +641,7 @@ func (s *Session) OnMessage(messageType int, message []byte) (*Event, error) {
 		var resumable bool
 		if err := json.Unmarshal(e.RawData, &resumable); err != nil {
 			s.log(LogError, "error unmarshalling invalid session event, %s", err)
-			return e, err
+			return err
 		}
 
 		if !resumable {
@@ -647,12 +652,12 @@ func (s *Session) OnMessage(messageType int, message []byte) (*Event, error) {
 		}
 
 		s.reconnect()
-		return e, nil
+		return nil
 	}
 
 	if e.Operation == 10 {
 		// Op10 is handled by Open()
-		return e, nil
+		return nil
 	}
 
 	if e.Operation == 11 {
@@ -660,15 +665,15 @@ func (s *Session) OnMessage(messageType int, message []byte) (*Event, error) {
 		s.LastHeartbeatAck = time.Now().UTC()
 		s.Unlock()
 		s.log(LogDebug, "got heartbeat ACK")
-		return e, nil
+		return nil
 	}
 
 	// Do not try to Dispatch a non-Dispatch Message
 	if e.Operation != 0 {
 		// But we probably should be doing something with them.
 		// TEMP
-		s.log(LogWarning, "unknown Op: %d, Seq: %d, Type: %s, Data: %s, message: %s", e.Operation, e.Sequence, e.Type, string(e.RawData), string(message))
-		return e, nil
+		s.log(LogWarning, "unknown Op: %d, Seq: %d, Type: %s, Data: %s", e.Operation, e.Sequence, e.Type, string(e.RawData))
+		return nil
 	}
 
 	// Store the message sequence
@@ -679,7 +684,7 @@ func (s *Session) OnMessage(messageType int, message []byte) (*Event, error) {
 		e.Struct = eh.New()
 
 		// Attempt to unmarshal our event.
-		if err = json.Unmarshal(e.RawData, e.Struct); err != nil {
+		if err := json.Unmarshal(e.RawData, e.Struct); err != nil {
 			s.log(LogError, "error unmarshalling %s event, %s", e.Type, err)
 		}
 
@@ -698,7 +703,7 @@ func (s *Session) OnMessage(messageType int, message []byte) (*Event, error) {
 	// For legacy reasons, we send the raw event also, this could be useful for handling unknown events.
 	s.HandleEvent(eventEventType, e)
 
-	return e, nil
+	return nil
 }
 
 // ------------------------------------------------------------------------------------------------
