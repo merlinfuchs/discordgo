@@ -17,6 +17,7 @@ import (
 	"math"
 	"net/http"
 	"regexp"
+	"strconv"
 	"sync"
 	"time"
 
@@ -163,25 +164,25 @@ type ApplicationIntegrationTypeConfig struct {
 
 // Application stores values for a Discord Application
 type Application struct {
-	ID                     string   `json:"id,omitempty"`
-	Name                   string   `json:"name"`
-	Icon                   string   `json:"icon,omitempty"`
-	Description            string   `json:"description,omitempty"`
-	RPCOrigins             []string `json:"rpc_origins,omitempty"`
-	BotPublic              bool     `json:"bot_public,omitempty"`
-	BotRequireCodeGrant    bool     `json:"bot_require_code_grant,omitempty"`
-	TermsOfServiceURL      string   `json:"terms_of_service_url"`
-	PrivacyProxyURL        string   `json:"privacy_policy_url"`
-	Owner                  *User    `json:"owner"`
-	Summary                string   `json:"summary"`
-	VerifyKey              string   `json:"verify_key"`
-	Team                   *Team    `json:"team"`
-	GuildID                string   `json:"guild_id"`
-	PrimarySKUID           string   `json:"primary_sku_id"`
-	Slug                   string   `json:"slug"`
-	CoverImage             string   `json:"cover_image"`
-	Flags                  int      `json:"flags,omitempty"`
-	InteractionEndpointURL string   `json:"interaction_endpoint_url,omitempty"`
+	ID                     string                                                           `json:"id,omitempty"`
+	Name                   string                                                           `json:"name"`
+	Icon                   string                                                           `json:"icon,omitempty"`
+	Description            string                                                           `json:"description,omitempty"`
+	RPCOrigins             []string                                                         `json:"rpc_origins,omitempty"`
+	BotPublic              bool                                                             `json:"bot_public,omitempty"`
+	BotRequireCodeGrant    bool                                                             `json:"bot_require_code_grant,omitempty"`
+	TermsOfServiceURL      string                                                           `json:"terms_of_service_url"`
+	PrivacyProxyURL        string                                                           `json:"privacy_policy_url"`
+	Owner                  *User                                                            `json:"owner"`
+	Summary                string                                                           `json:"summary"`
+	VerifyKey              string                                                           `json:"verify_key"`
+	Team                   *Team                                                            `json:"team"`
+	GuildID                string                                                           `json:"guild_id"`
+	PrimarySKUID           string                                                           `json:"primary_sku_id"`
+	Slug                   string                                                           `json:"slug"`
+	CoverImage             string                                                           `json:"cover_image"`
+	Flags                  int                                                              `json:"flags,omitempty"`
+	InteractionEndpointURL string                                                           `json:"interaction_endpoint_url,omitempty"`
 	IntegrationTypesConfig map[ApplicationIntegrationType]*ApplicationIntegrationTypeConfig `json:"integration_types,omitempty"`
 }
 
@@ -595,11 +596,24 @@ type ForumDefaultReaction struct {
 
 // ForumTag represents a tag that is able to be applied to a thread in a forum channel.
 type ForumTag struct {
-	ID        string `json:"id,omitempty"`
-	Name      string `json:"name"`
-	Moderated bool   `json:"moderated"`
-	EmojiID   string `json:"emoji_id,omitempty"`
-	EmojiName string `json:"emoji_name,omitempty"`
+	ID        Snowflake `json:"id,omitempty"`
+	Name      string    `json:"name"`
+	Moderated bool      `json:"moderated"`
+	EmojiID   string    `json:"emoji_id,omitempty"`
+	EmojiName string    `json:"emoji_name,omitempty"`
+}
+
+type Snowflake string
+
+func (id *Snowflake) UnmarshalJSON(data []byte) error {
+	s := string(data)
+	snowflake, err := strconv.Unquote(s)
+	if err != nil {
+		snowflake = s
+	}
+
+	*id = Snowflake(snowflake)
+	return nil
 }
 
 // Emoji struct holds data related to Emoji's
@@ -1622,7 +1636,6 @@ func (m *Member) AvatarURL(size string) string {
 	// The default/empty avatar case should be handled by the above condition
 	return avatarURL(m.Avatar, "", EndpointGuildMemberAvatar(m.GuildID, m.User.ID, m.Avatar),
 		EndpointGuildMemberAvatarAnimated(m.GuildID, m.User.ID, m.Avatar), size)
-
 }
 
 // BannerURL returns the URL of the member's banner image.
