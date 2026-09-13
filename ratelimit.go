@@ -22,8 +22,11 @@ type RateLimiter struct {
 	sync.Mutex
 	global           *int64
 	buckets          map[string]*Bucket
-	globalRateLimit  time.Duration
 	customRateLimits []*customRateLimit
+
+	// Pacing across all buckets, see SetGlobalRate.
+	globalPace     time.Duration
+	nextGlobalSlot time.Time
 }
 
 // NewRatelimiter returns a new RateLimiter
@@ -69,7 +72,8 @@ func (r *RateLimiter) GetBucket(key string) *Bucket {
 	return b
 }
 
-// GetWaitTime returns the duration you should wait for a Bucket
+// GetWaitTime returns the duration you should wait for a Bucket.
+// Global waits are not included, see GlobalWait.
 func (r *RateLimiter) GetWaitTime(b *Bucket, minRemaining int) time.Duration {
 	// If we ran out of calls and the reset time is still ahead of us
 	// then we need to take it easy and relax a little
@@ -77,12 +81,52 @@ func (r *RateLimiter) GetWaitTime(b *Bucket, minRemaining int) time.Duration {
 		return b.reset.Sub(time.Now())
 	}
 
-	// Check for global ratelimits
-	sleepTo := time.Unix(0, atomic.LoadInt64(r.global))
-	if now := time.Now(); now.Before(sleepTo) {
-		return sleepTo.Sub(now)
-	}
+	return 0
+}
 
+// SetGlobalRate paces requests across every bucket to at most perSecond.
+// The limiter only learns Discord's global limit from 429s, and collecting
+// those is what gets an IP blocked. Zero, the default, disables pacing.
+func (r *RateLimiter) SetGlobalRate(perSecond int) {
+	r.Lock()
+	defer r.Unlock()
+
+	if perSecond <= 0 {
+		r.globalPace = 0
+		return
+	}
+	r.globalPace = time.Second / time.Duration(perSecond)
+}
+
+// SetGlobalReset blocks every bucket until t.
+func (r *RateLimiter) SetGlobalReset(t time.Time) {
+	atomic.StoreInt64(r.global, t.UnixNano())
+}
+
+// GlobalWait returns how long to wait before the next request: the rest of a
+// global limit, plus the next pacing slot when SetGlobalRate is in use. The
+// slot is reserved, so the caller is expected to send.
+func (r *RateLimiter) GlobalWait() time.Duration {
+	now := time.Now()
+	until := time.Unix(0, atomic.LoadInt64(r.global))
+
+	r.Lock()
+	if r.globalPace > 0 {
+		slot := r.nextGlobalSlot
+		if slot.Before(now) {
+			slot = now
+		}
+		if slot.Before(until) {
+			slot = until
+		}
+		r.nextGlobalSlot = slot.Add(r.globalPace)
+		until = slot
+	}
+	r.Unlock()
+
+	if until.After(now) {
+		return until.Sub(now)
+	}
 	return 0
 }
 
