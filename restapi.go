@@ -2987,7 +2987,9 @@ func (s *Session) ThreadsArchived(channelID string, before *time.Time, limit int
 	}
 
 	var body []byte
-	body, err = s.RequestWithBucketID("GET", endpoint, nil, endpoint, options...)
+	// One bucket for every channel (X-RateLimit-Bucket is the same across
+	// them), so key it on the route rather than the URL.
+	body, err = s.RequestWithBucketID("GET", endpoint, nil, EndpointChannelPublicArchivedThreads(""), options...)
 	if err != nil {
 		return
 	}
