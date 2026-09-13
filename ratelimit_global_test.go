@@ -82,26 +82,27 @@ func TestRateLimitBlockParksAllBuckets(t *testing.T) {
 	}
 }
 
-// A bucket 429 with retry_after is retried after that long, bounded by
-// MaxRestRetries.
-func TestRateLimit429RetryBounded(t *testing.T) {
+// A bucket 429 with retry_after is retried after that long for as long as
+// the caller's context allows.
+func TestRateLimit429RetryUntilDeadline(t *testing.T) {
 	s, srv, hits := newTestSession(t, func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("X-RateLimit-Bucket", "abc")
 		w.WriteHeader(http.StatusTooManyRequests)
 		_, _ = w.Write([]byte(`{"message":"You are being rate limited.","retry_after":0.05,"global":false}`))
 	})
-	s.MaxRestRetries = 2
 
+	ctx, cancel := context.WithTimeout(context.Background(), 300*time.Millisecond)
+	defer cancel()
 	start := time.Now()
-	_, err := s.RequestWithBucketID("GET", srv.URL+"/a", nil, "a")
+	_, err := s.RequestWithBucketID("GET", srv.URL+"/a", nil, "a", WithContext(ctx))
 	if _, ok := err.(*RateLimitError); !ok {
 		t.Fatalf("want *RateLimitError, got %T: %v", err, err)
 	}
-	if n := atomic.LoadInt32(hits); n != 3 {
-		t.Errorf("want initial + 2 retries = 3 requests, got %d", n)
+	if n := atomic.LoadInt32(hits); n < 4 || n > 7 {
+		t.Errorf("want ~5 attempts inside a 300ms deadline at 50ms retries, got %d", n)
 	}
-	if el := time.Since(start); el < 100*time.Millisecond || el > time.Second {
-		t.Errorf("expected ~100ms of retry sleeps, took %v", el)
+	if el := time.Since(start); el > 400*time.Millisecond {
+		t.Errorf("should give up at the deadline, took %v", el)
 	}
 }
 

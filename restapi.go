@@ -306,8 +306,11 @@ func (s *Session) RequestWithLockedBucket(method, urlStr, contentType string, b 
 			s.Ratelimiter.SetGlobalReset(time.Now().Add(rl.RetryAfter))
 		}
 
+		// Retries are bounded by the caller's context, not MaxRestRetries: a
+		// bucket 429 with retry_after is Discord asking us to wait, and
+		// giving up after three drops the request where waiting delivers it.
 		err = &RateLimitError{rlEvent}
-		if !cfg.ShouldRetryOnRateLimit || rl.RetryAfter <= 0 || sequence >= cfg.MaxRestRetries {
+		if !cfg.ShouldRetryOnRateLimit || rl.RetryAfter <= 0 {
 			return
 		}
 
@@ -315,7 +318,7 @@ func (s *Session) RequestWithLockedBucket(method, urlStr, contentType string, b 
 		if err = waitRateLimit(req.Context(), rlEvent); err != nil {
 			return
 		}
-		response, err = s.RequestWithLockedBucket(method, urlStr, contentType, b, s.Ratelimiter.LockBucketObject(bucket), sequence+1, options...)
+		response, err = s.RequestWithLockedBucket(method, urlStr, contentType, b, s.Ratelimiter.LockBucketObject(bucket), sequence, options...)
 	case http.StatusUnauthorized:
 		if strings.Index(s.Token, "Bot ") != 0 {
 			s.log(LogInformational, ErrUnauthorized.Error())
