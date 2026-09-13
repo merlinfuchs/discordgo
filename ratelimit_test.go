@@ -65,19 +65,19 @@ func TestRatelimitGlobal(t *testing.T) {
 		}
 	}
 
-	sent := time.Now()
-
 	// This should trigger a global ratelimit
 	sendReq("/guilds/99/channels")
 	time.Sleep(time.Millisecond * 100)
 
-	// This shouldn't go through in less than 1 second
+	// Global waits are served from GlobalWait rather than LockBucket so the
+	// request path can weigh them against the caller's context.
 	sendReq("/guilds/55/channels")
+	wait := rl.GlobalWait()
 
-	if time.Since(sent) >= time.Second && time.Since(sent) < time.Second*2 {
-		t.Log("OK", time.Since(sent))
+	if wait > time.Millisecond*500 && wait <= time.Second {
+		t.Log("OK", wait)
 	} else {
-		t.Error("Did not ratelimit correctly, got:", time.Since(sent))
+		t.Error("Did not ratelimit correctly, got:", wait)
 	}
 }
 

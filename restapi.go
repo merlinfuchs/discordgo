@@ -12,6 +12,7 @@ package discordgo
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -26,8 +27,6 @@ import (
 	"strconv"
 	"strings"
 	"time"
-
-	"context"
 )
 
 // All error constants
@@ -232,6 +231,13 @@ func (s *Session) RequestWithLockedBucket(method, urlStr, contentType string, b 
 		}
 	}
 
+	if wait := s.Ratelimiter.GlobalWait(); wait > 0 {
+		if err = waitRateLimit(req.Context(), &RateLimit{&TooManyRequests{RetryAfter: wait, Global: true}, urlStr}); err != nil {
+			bucket.Release(nil)
+			return
+		}
+	}
+
 	resp, err := cfg.Client.Do(req)
 	if err != nil {
 		bucket.Release(nil)
@@ -284,24 +290,32 @@ func (s *Session) RequestWithLockedBucket(method, urlStr, contentType string, b 
 		}
 	case http.StatusTooManyRequests:
 		rl := TooManyRequests{}
-		err = Unmarshal(response, &rl)
-		if err != nil {
-			s.log(LogError, "rate limit unmarshal error, %s", err)
+		if jsonErr := Unmarshal(response, &rl); jsonErr != nil {
+			s.log(LogWarning, "rate limit body is not JSON: %s", jsonErr)
+		}
+		if rl.RetryAfter <= 0 {
+			// Cloudflare's block page has no body to speak of; the header still says how long.
+			rl.RetryAfter = retryAfterHeader(resp.Header)
+		}
+		rlEvent := &RateLimit{&rl, urlStr}
+		s.handleEvent(rateLimitEventType, rlEvent)
+
+		// No bucket header means the limit is not on this route: Discord's
+		// global limit or an IP block. Park every bucket so it can expire.
+		if rl.RetryAfter > 0 && resp.Header.Get("X-RateLimit-Bucket") == "" {
+			s.Ratelimiter.SetGlobalReset(time.Now().Add(rl.RetryAfter))
+		}
+
+		err = &RateLimitError{rlEvent}
+		if !cfg.ShouldRetryOnRateLimit || rl.RetryAfter <= 0 || sequence >= cfg.MaxRestRetries {
 			return
 		}
 
-		if cfg.ShouldRetryOnRateLimit {
-			s.log(LogInformational, "Rate Limiting %s, retry in %v", urlStr, rl.RetryAfter)
-			s.handleEvent(rateLimitEventType, &RateLimit{TooManyRequests: &rl, URL: urlStr})
-
-			time.Sleep(rl.RetryAfter)
-			// we can make the above smarter
-			// this method can cause longer delays than required
-
-			response, err = s.RequestWithLockedBucket(method, urlStr, contentType, b, s.Ratelimiter.LockBucketObject(bucket), sequence, options...)
-		} else {
-			err = &RateLimitError{&RateLimit{TooManyRequests: &rl, URL: urlStr}}
+		s.log(LogInformational, "Rate Limiting %s, retry in %v", urlStr, rl.RetryAfter)
+		if err = waitRateLimit(req.Context(), rlEvent); err != nil {
+			return
 		}
+		response, err = s.RequestWithLockedBucket(method, urlStr, contentType, b, s.Ratelimiter.LockBucketObject(bucket), sequence+1, options...)
 	case http.StatusUnauthorized:
 		if strings.Index(s.Token, "Bot ") != 0 {
 			s.log(LogInformational, ErrUnauthorized.Error())
@@ -313,6 +327,34 @@ func (s *Session) RequestWithLockedBucket(method, urlStr, contentType string, b 
 	}
 
 	return
+}
+
+// waitRateLimit sleeps out rl unless ctx ends first. A wait the deadline
+// cannot cover is returned as a RateLimitError right away, so a call never
+// sleeps just to fail.
+func waitRateLimit(ctx context.Context, rl *RateLimit) error {
+	if deadline, ok := ctx.Deadline(); ok && time.Until(deadline) < rl.RetryAfter {
+		return &RateLimitError{rl}
+	}
+
+	t := time.NewTimer(rl.RetryAfter)
+	defer t.Stop()
+	select {
+	case <-ctx.Done():
+		return ctx.Err()
+	case <-t.C:
+		return nil
+	}
+}
+
+// retryAfterHeader reads Retry-After, in seconds, for 429s whose body has no
+// retry_after.
+func retryAfterHeader(h http.Header) time.Duration {
+	secs, err := strconv.ParseFloat(h.Get("Retry-After"), 64)
+	if err != nil || secs <= 0 {
+		return 0
+	}
+	return time.Duration(secs * float64(time.Second))
 }
 
 func unmarshal(data []byte, v interface{}) error {
@@ -1187,6 +1229,21 @@ func (s *Session) GuildRoleDelete(guildID, roleID string, options ...RequestOpti
 
 	_, err = s.RequestWithBucketID("DELETE", EndpointGuildRole(guildID, roleID), nil, EndpointGuildRole(guildID, ""), options...)
 
+	return
+}
+
+// GuildRoleMemberCounts returns a map of role ID to the number of members that have that role.
+//
+// guildID	: The ID of a Guild.
+//
+// Does not include the @everyone role.
+func (s *Session) GuildRoleMemberCounts(guildID string, options ...RequestOption) (memberCounts map[string]uint64, err error) {
+	body, err := s.RequestWithBucketID("GET", EndpointGuildRoleMemberCounts(guildID), nil, EndpointGuildRoleMemberCounts(guildID), options...)
+	if err != nil {
+		return
+	}
+
+	err = unmarshal(body, &memberCounts)
 	return
 }
 
@@ -2930,7 +2987,9 @@ func (s *Session) ThreadsArchived(channelID string, before *time.Time, limit int
 	}
 
 	var body []byte
-	body, err = s.RequestWithBucketID("GET", endpoint, nil, endpoint, options...)
+	// One bucket for every channel (X-RateLimit-Bucket is the same across
+	// them), so key it on the route rather than the URL.
+	body, err = s.RequestWithBucketID("GET", endpoint, nil, EndpointChannelPublicArchivedThreads(""), options...)
 	if err != nil {
 		return
 	}
